@@ -485,8 +485,8 @@ class Layer(KeymapProvider, MousemapProvider, ABC):
     def visible(self, visibility):
         self._visible = visibility
         self.refresh()
-        self.events.visible()
         self.editable = self._set_editable() if self.visible else False
+        self.events.visible()
 
     @property
     def editable(self):
