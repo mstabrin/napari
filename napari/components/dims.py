@@ -161,7 +161,7 @@ class Dims(EventedModel):
         )
 
     @property
-    def point(self) -> Tuple[int, ...]:
+    def point(self) -> Tuple[float, ...]:
         """Tuple of float: Value of each dimension."""
         # The point value is computed from the range and current_step
         point = tuple(
@@ -193,7 +193,7 @@ class Dims(EventedModel):
             Sequence[Union[int, float]], Sequence[Sequence[Union[int, float]]]
         ],
         *,
-        restore_point: Optional[Sequence[float]] = None,
+        restore_point: Optional[Tuple[float, ...]] = None,
     ):
         """Sets ranges (min, max, step) for the given dimensions.
 
@@ -204,8 +204,10 @@ class Dims(EventedModel):
         _range : tuple or sequence of tuple
             Range specified as (min, max, step) or a sequence of these range
             tuples.
-        restore_point : tuple or None
+        restore_point : tuple of float or None
             Point to set after the range changes. If None, no point is restored.
+            This is useful for maintaining the current slicing plane as much as
+            possible when layers are added and removed.
         """
         if isinstance(axis, Integral):
             axis = assert_axis_in_bounds(axis, self.ndim)  # type: ignore
@@ -233,26 +235,24 @@ class Dims(EventedModel):
 
     def _get_point_in_ndim(
         self,
-        point: Sequence[float],
-    ):
-
+        point: Tuple[float, ...],
+    ) -> Tuple[float, ...]:
         """Get a point in the current dimensionality.
 
         Coordinates outside the current dimensionality are removed.
-        If new dimensions need to be added the midpoint of the respective range
-        is chosen for the dimensions point value.
+        If new dimensions need to be added, the midpoints of the ranges
+        of those dimensions are used for the new coordinates.
 
         Parameters
         ----------
-        point : tuple
-            Point check if it is within the current range.
+        point : tuple of float
+            Some input coordinates that may have a higher or lower dimensionality than the current one.
 
         Returns
         ---------
-        point: tuple
-            Tuple within the current dimension
+        point : tuple of float
+            The input coordinates trimmed or padded to fit in the current dimensionality.
         """
-        point = tuple(point)
         mid_points = tuple(
             rounded_division(*_range) for _range in self.range[: -len(point)]
         )

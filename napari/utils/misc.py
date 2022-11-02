@@ -699,7 +699,37 @@ def install_certifi_opener():
     request.install_opener(opener)
 
 
-def rounded_division(min_val, max_val, precision):
+def rounded_division(
+    min_val: float, max_val: float, precision: float
+) -> float:
+    """Finds the midpoint of two values to a given precision.
+
+    In napari, this is useful for calculating the midpoint of dimensional ranges
+    or extents. In that case, the two values are the lower and upper bound of the
+    extent and the precision is the step between sample points in that extent.
+    The result represents the midpoint of that dimensional extent, snapped to one
+    of the sample points.
+
+    Parameters
+    ----------
+    min_val : float
+        The minimum or lower value.
+    max_val : float
+        The maximum or upper value.
+    precision : float
+        The precision at which rounding should occur.
+
+    Examples
+    --------
+    >>> rounded_division(1, 4, 0.5)
+    2.5
+
+    >>> rounded_division(1, 4, 1)
+    2
+
+    >>> rounded_division(1, 4, 0.3)
+    2.4
+    """
     return int(((min_val + max_val) / 2) / precision) * precision
 
 
