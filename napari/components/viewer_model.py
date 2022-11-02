@@ -368,20 +368,18 @@ class ViewerModel(KeymapProvider, MousemapProvider, EventedModel):
             self.camera.interactive = active_layer.interactive
 
     def _on_layers_change(self):
+        """Update the dimension and range of the dims property as well as the cursor position.
+
+        When the ranges are updated, we try to maintain the current slice plane as much
+        as possible.
         """
-        Update the dimension and range of the dims property as well as the cursor position.
-        When changing the dims property the currently selected view of the
-        viewer is tried to be maintained.
-        """
-        ranges = None
+        previous_point = None
         if len(self.layers) == 0:
             self.dims.ndim = 2
             self.dims.reset()
         else:
-            ranges = self.layers._ranges
-            prev_point = self.dims.point
-            ndim = len(ranges)
-            self.dims.ndim = ndim
+            previous_point = self.dims.point
+            self.dims.ndim = self.layers.ndim
 
         new_dim = self.dims.ndim
         dim_diff = new_dim - len(self.cursor.position)
@@ -391,8 +389,14 @@ class ViewerModel(KeymapProvider, MousemapProvider, EventedModel):
             self.cursor.position = tuple(
                 list(self.cursor.position) + [0] * dim_diff
             )
-        if ranges is not None:
-            self.dims.set_range(range(ndim), ranges, restore_point=prev_point)
+
+        if previous_point is not None:
+            ranges = self.layers._ranges
+            self.dims.set_range(
+                range(len(ranges)),
+                ranges,
+                restore_point=previous_point,
+            )
         self.events.layers_change()
 
     def _update_interactive(self, event):
@@ -506,9 +510,9 @@ class ViewerModel(KeymapProvider, MousemapProvider, EventedModel):
 
         if len(self.layers) == 1:
             self.reset_view()
-            new_point = [
-                rounded_division(*_range) for _range in self.dims.range
-            ]
+            new_point = tuple(
+                rounded_division(*range_) for range_ in self.dims.range
+            )
             self.dims.set_point(range(self.dims.ndim), new_point)
 
     @staticmethod
